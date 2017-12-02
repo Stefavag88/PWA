@@ -109,7 +109,11 @@ dbPromise.then(db => {
   const peopleStore = tx.objectStore(people);
   const ageIndex = peopleStore.index('age');
 
-  return ageIndex.getAll();
-}).then(indexedCusts => {
-  console.log('Got customers by age', indexedCusts);
+  return ageIndex.openCursor();
+}).then(function logPerson(cursor){
+  if (!cursor) return;
+  console.log(`Cursored at: ${cursor.value.name}`);
+  return cursor.continue.then(logPerson);
+}).then(() => {
+  console.log('Cursoring Done');
 });
