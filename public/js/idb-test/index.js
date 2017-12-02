@@ -11,27 +11,38 @@ const customers = [
   {
     id: 1,
     name: 'Tzolas Mitsos',
-    age: 30
+    age: 30,
+    favoriteAnimal: 'cat'
   },
   {
     id: 2,
     name: 'Vag Stef',
-    age: 29
+    age: 29,
+    favoriteAnimal: 'dog',
   },
   {
     id: 3,
     name: 'Antoniadis Konstantinos',
-    age: 28
+    age: 28,
+    favoriteAnimal: 'cat'
   },
   {
     id: 4,
     name: 'Mr. George',
-    age: 54
+    age: 54,
+    favoriteAnimal: 'dog'
+  },
+  {
+    id: 5,
+    name: 'Mary K',
+    age:20,
+    favoriteAnimal: 'dolphin'
   },
 ];
 
-
-const dbPromise = idb.open('test-db', 2, upgradeDb => {
+//Example of using an index on customers.
+//We have to increment the version of the DB first.
+const dbPromise = idb.open('test-db', 3, upgradeDb => {
 
   switch (upgradeDb.oldVersion) {
     case 0:
@@ -40,6 +51,12 @@ const dbPromise = idb.open('test-db', 2, upgradeDb => {
     //do not use break; here -- we want the code to continue so that every old version is checked!
     case 1:
       upgradeDb.createObjectStore(people, { keyPath:'id' });
+    case 2:
+      //We have to get a hold of the object store 'people'
+      const custs = upgradeDb.transaction.objectStore(people);
+      //We create the index on favoriteAnimal property and giving it the name 'animal'
+      custs.createIndex('animal', 'favoriteAnimal');
+      //Go to bottom to see the how are getting them by index
   }
 });
 
@@ -70,10 +87,10 @@ dbPromise.then(db => {
   return tx.complete;
 }).then(() => {
   console.log('Added favoriteAnimal : cat');
-})
+});
 
+//Add customers to 'people'store
 dbPromise.then(db => {
-
   const tx = db.transaction(people, 'readwrite');
   const peopleStore = tx.objectStore(people);
 
@@ -84,4 +101,17 @@ dbPromise.then(db => {
   return tx.complete;
 }).then(() => {
   console.log('Added customers', customers);
-})
+});
+
+//Get the people by Index
+dbPromise.then(db => {
+  
+    const tx = db.transaction(people, 'readwrite');
+    const peopleStore = tx.objectStore(people);
+    const animalIndex = peopleStore.index('animal');
+
+    //Instead of calling getAll() on the store , we call it on the index.
+    return animalIndex.getAll()
+  }).then((indexedCusts) => {
+    console.log('Got customers by index of favoriteAnimal', indexedCusts);
+  })
