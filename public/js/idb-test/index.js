@@ -113,7 +113,7 @@ dbPromise.then(db => {
 }).then(function logPerson(cursor){
   if (!cursor) return;
   console.log(`Cursored at: ${cursor.value.name}`);
-  return cursor.continue.then(logPerson);
+  return cursor.continue().then(logPerson);
 }).then(() => {
   console.log('Cursoring Done');
 });
