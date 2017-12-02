@@ -35,7 +35,7 @@ const customers = [
   {
     id: 5,
     name: 'Mary K',
-    age:20,
+    age: 20,
     favoriteAnimal: 'dolphin'
   },
 ];
@@ -50,13 +50,13 @@ const dbPromise = idb.open('test-db', 3, upgradeDb => {
       keyValStore.put("world", "hello");
     //do not use break; here -- we want the code to continue so that every old version is checked!
     case 1:
-      upgradeDb.createObjectStore(people, { keyPath:'id' });
+      upgradeDb.createObjectStore(people, { keyPath: 'id' });
     case 2:
       //We have to get a hold of the object store 'people'
       const custs = upgradeDb.transaction.objectStore(people);
-      //We create the index on favoriteAnimal property and giving it the name 'animal'
-      custs.createIndex('animal', 'favoriteAnimal');
-      //Go to bottom to see the how are getting them by index
+      //We create the index on age property and giving it the name 'age'
+      custs.createIndex('age', 'age');
+    //Go to bottom to see the how are getting them by index
   }
 });
 
@@ -94,24 +94,22 @@ dbPromise.then(db => {
   const tx = db.transaction(people, 'readwrite');
   const peopleStore = tx.objectStore(people);
 
-  customers.forEach( cust => {
+  customers.forEach(cust => {
     peopleStore.put(cust);
   });
- 
+
   return tx.complete;
 }).then(() => {
   console.log('Added customers', customers);
 });
 
-//Get the people by Index
+//Order People by age
 dbPromise.then(db => {
-  
-    const tx = db.transaction(people, 'readwrite');
-    const peopleStore = tx.objectStore(people);
-    const animalIndex = peopleStore.index('animal');
+  const tx = db.transaction(people, 'readwrite');
+  const peopleStore = tx.objectStore(people);
+  const ageIndex = peopleStore.index('age');
 
-    //Instead of calling getAll() on the store , we call it on the index.
-    return animalIndex.getAll()
-  }).then((indexedCusts) => {
-    console.log('Got customers by index of favoriteAnimal', indexedCusts);
-  })
+  return ageIndex.getAll();
+}).then(indexedCusts => {
+  console.log('Got customers by age', indexedCusts);
+});
