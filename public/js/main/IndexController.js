@@ -2,6 +2,8 @@ import PostsView from './views/Posts';
 import ToastsView from './views/Toasts';
 import idb from 'idb';
 
+const IMAGES_CACHE = "wittr-content-imgs";
+
 function openDatabase() {
   // If the browser doesn't support service worker,
   // we don't care about having a database
@@ -161,9 +163,35 @@ IndexController.prototype._cleanImageCache = function() {
 
     // TODO: open the 'wittr' object store, get all the messages,
     // gather all the photo urls.
-    //
-    // Open the 'wittr-content-imgs' cache, and delete any entry
-    // that you no longer need.
+    let imagesNeeded = [];
+    const tx = db.transaction('wittrs');
+    const store = tx.objectStore('wittrs').getAll();
+    return store.then(messages => {
+      messages.forEach(msg => {
+        if (msg.photo){
+          imagesNeeded.push(msg.photo);
+        }
+
+        if(msg.avatar){
+          imagesNeeded.push(msg.avatar);
+        }
+      });
+      //Open the 'wittr-content-imgs' cache...
+      return caches.open(IMAGES_CACHE);
+    })
+    //... and delete any entry that you no longer need.
+    .then(imgCache => {
+      return imgCache.keys().then( records => {
+          records.forEach(record => {
+            let url = new URL(record.url);
+
+            if(!imagesNeeded.includes(url.pathname)){
+              imgCache.delete(record);
+            }
+
+          });
+      });
+    });
   });
 };
 

@@ -44,7 +44,12 @@ self.addEventListener('fetch', function(event) {
       return;
     }
     if (requestUrl.pathname.startsWith('/photos/')) {
-      event.respondWith(servePhoto(event.request));
+      event.respondWith(serveImg(event.request,'photo'));
+      return;
+    }
+
+    if(requestUrl.pathname.startsWith('/avatars/')){
+      event.respondWith(serveImg(event.request, 'avatar'));
       return;
     }
   }
@@ -56,8 +61,18 @@ self.addEventListener('fetch', function(event) {
   );
 });
 
-function servePhoto(request) {
-  var storageUrl = request.url.replace(/-\d+px\.jpg$/, '');
+function serveImg(request, imgType) {
+
+  let storageUrl = request.url;
+
+  switch (imgType){
+    case 'photo':
+      storageUrl = storageUrl.replace(/-\d+px\.jpg$/, '');
+      break;
+    case 'avatar':
+      storageUrl  = storageUrl.replace(/-\dx\.jpg$/, '');
+      break;
+  }
 
   return caches.open(contentImgsCache).then(function(cache) {
     return cache.match(storageUrl).then(function(response) {
